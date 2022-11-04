@@ -1,0 +1,5 @@
+City: Praha, Berlin, Pariz, Viden, Londyn
+LS2021: Praha -> Berlin -> Pariz -> Praha
+ZS2020: Praha -> Londyn -> Pariz -> Viden
+AB111: Viden -> Londyn -> Pariz -> Berlin
+XYZ007: Praha -> Pariz -> Viden

@@ -1,0 +1,6 @@
+A - B: 1m
+B - C: 2m
+C - D: 1m
+D - A: 3m
+A - C: 3m
+B - D: 2m

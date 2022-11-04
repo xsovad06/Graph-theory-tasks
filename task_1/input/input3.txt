@@ -1,0 +1,5 @@
+Places: Praha, Berlin, Rim, Pariz, Viden, Londyn, Brno
+2018: Praha -> Berlin -> Pariz -> Praha
+2019: Praha -> Londyn -> Pariz -> Viden
+2020: Viden -> Londyn -> Pariz -> Berlin
+2021: Praha -> Pariz -> Viden

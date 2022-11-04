@@ -1,0 +1,8 @@
+Sections: mustek, motory, navigace, komunikace, kyslik, unikovy_modul
+mustek - motory
+mustek - kyslik
+motory - kyslik
+motory - navigace
+kyslik - komunikace
+komunikace - navigace
+navigace - unikovy_modul

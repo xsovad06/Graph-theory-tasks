@@ -1,0 +1,5 @@
+City: Praha, Berlín, Paříž, Vídeň, Londýn
+LS2021: Praha -> Berlín -> Paříž -> Praha
+ZS2020: Praha -> Londýn -> Paříž -> Vídeň
+AB111: Vídeň -> Londýn -> Paříž -> Berlín
+XYZ007: Praha -> Paříž -> Vídeň

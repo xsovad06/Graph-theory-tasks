@@ -1,0 +1,6 @@
+CPU: motory, navigace, komunikace, mustek, kyslik
+motory - kyslik: 15s
+navigace - komunikace: 90s
+mustek - kyslik: 20s
+motory - navigace: 50s komunikace - mustek: 35s
+kyslik - komunikace: 15s

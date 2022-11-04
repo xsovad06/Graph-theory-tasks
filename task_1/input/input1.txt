@@ -1,0 +1,5 @@
+Group: Honza, Pepa, Anna, Jarek, Tomas
+Honza - Pepa
+Jarek - Anna
+Anna - Tomas
+Honza - Tomas

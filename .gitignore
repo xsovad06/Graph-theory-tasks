@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# not submiting files
+*.docx
+*.zip
+
+# mac file
+.DS_Store
+
 # C extensions
 *.so
 

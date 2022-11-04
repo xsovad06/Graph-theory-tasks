@@ -1,0 +1,7 @@
+Ua |-01-| Ub
+Ub |-02-| Uc
+Uc |-03-| Ud
+Ud |-04-| Uf
+Uf |-05-| Uc
+Uc |-06-| Ua
+Ua |-07-| Uf

@@ -1,0 +1,10 @@
+Store: Praha, Berlin, Pariz, Viden, Londyn
+Z01: Praha -> Berlin
+Z02: Pariz -> Praha
+Z03: Praha -> Londyn
+Z04: Pariz -> Viden
+Z05: Viden -> Londyn
+Z06: Pariz -> Berlin
+Z07: Praha -> Pariz
+Z08: Londyn -> Viden
+Z09: Praha -> Londyn

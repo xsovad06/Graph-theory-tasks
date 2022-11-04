@@ -1,0 +1,4 @@
+Guideposts: Keprnik, Pocaply, Strekov, Rovina, Mandava, Satalice
+T01: Keprnik -> Pocaply -> Strekov -> Strekov -> Rovina
+T02: Satalice -> Keprnik -> Mandava -> Mandava
+T03: Pocaply -> Satalice -> Keprnik -> Satalice

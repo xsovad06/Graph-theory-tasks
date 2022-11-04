@@ -1,0 +1,9 @@
+Employ: Honza, Pepa, Anna, Jarek, Tomas
+Honza -> Pepa
+Pepa -> Anna
+Anna -> Jarek
+Anna -> Pepa
+Pepa -> Anna
+Jarek -> Anna
+Tomas -> Honza
+Honza -> Tomas

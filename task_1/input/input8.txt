@@ -1,0 +1,8 @@
+BRNO, PRAHA, OSTRAVA
+brno, praha, olomouc
+BRNO -> PRAHA
+OSTRAVA -> PRAHA
+PRAHA -> BRNO
+brno -> praha
+olomouc -> praha
+praha -> brno
