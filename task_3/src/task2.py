@@ -54,7 +54,7 @@ class Graph:
       node.low = low
       node.next = self.graph[destination]
       self.graph[destination] = node
-  
+
   def existEgde(self, source, destination):
     """Check whether the given source and destination are connected."""
 
@@ -179,7 +179,7 @@ class Graph:
     count = 0
     while tmp:
       count += 1
-      tmp = tmp.next			
+      tmp = tmp.next
     return count
 
   def getNeighboursList(self, name):
@@ -194,65 +194,69 @@ class Graph:
       tmp = tmp.next			
     return neighbours
 
-  def createSingleDfsCycle(self, first_name):
+  def createSingleDfsCycle(self, first_name, last_name, eulerian_struct):
     """Returns the order of nodes produced by DFS algorithm from given node to given node."""
 
     stack = [first_name]
-    expanded = []
+    expanded_nodes = []
+    expanded_paths = []
 
     while stack:
       node = stack.pop()
 
-      if len(expanded) > 2 and node == first_name:
-        expanded.append(node)
-        return expanded
+      if len(expanded_nodes) > 2 and node == last_name:
+        expanded_nodes.append(node)
+        return expanded_nodes
 
-      if node in expanded:
-        continue
+      # if node in expanded_nodes:
+      #   continue
 
-      expanded.append(node)
-      # print(f" Processing {node}, expanded: {expanded}")
+      expanded_nodes.append(node)
+      # print(f" Processing {node}, expanded: {expanded_nodes}")
 
-      for neighbor in self.getNeighboursList(node):
+      for neighbor in eulerian_struct[node]["avail_conns"]:
         # prevent previous path
-        if len(expanded) >= 2:
+        if len(expanded_nodes) >= 2:
           # avoid path -> node, current_node, node
-          if expanded[-2] != neighbor.name:
-            # print(f"  Adding to stack {neighbor.name}")
-            stack.append(neighbor.name)
+          if expanded_nodes[-2] != neighbor[0]:
+            # print(f"  Adding to stack {neighbor[0]}")
+            stack.append(neighbor[0])
         else:
-          # print(f"  Adding to stack {neighbor.name}")
-          stack.append(neighbor.name)
+          # print(f"  Adding to stack {neighbor[0]}")
+          stack.append(neighbor[0])
 
-    return expanded
+    return expanded_nodes
 
-  def createSpanningTreeFromDfs(self, dfs):
-    """Creates a SpanningTree from DFS algorithm"""
+  def isConnected(self):
+    """For every node must exist at least one connection for connected graph."""
 
-    last_node = ""
-    dfs_path = list(dfs.keys())
-    for node, dfnum in dfs.items():
-      if last_node:
-        if graph.existEgde(last_node, node):
-          self.addEdge(last_node, node, dfnum=dfnum)
-        # došlo k backtrackingu pri DFS, treba dohladať, najbližší spoj z predošle spracovaného grafu z DFS do Node
-        else:
-          for i in (range(dfs_path.index(last_node), -1, -1)):
-            if graph.existEgde(dfs_path[i], node):
-              self.addEdge(dfs_path[i], node, dfnum=dfnum)
-              break
-      last_node = node
+    for node in self.graph:
+      if len(self.getNeighboursList(node)) == 0:
+        return False
+    return True
 
   def checkEulerianPathPrecondition(self):
     """Count the number of each node neighbors. All must be even or precisely two odd."""
 
-    odd_count = 0
+    odd_nodes = []
     for node in self.graph:
       if len(self.getNeighboursList(node)) % 2 != 0:
-        if odd_count > 1:
-          return False
-        odd_count += 1
-    return True
+        if len(odd_nodes) > 1:
+          return False, odd_nodes
+        odd_nodes.append(node)
+    return True, odd_nodes
+
+  def createNodeConnectionsStructure(self):
+    """For each node create list of available and used connections to neighbor nodes."""
+
+    connection_struct = {}
+    for node in self.graph:
+      avail_conns = []
+      for neighbor in self.getNeighboursList(node):
+        avail_conns.append((neighbor.name, neighbor.value))
+        # avail_conns.append((neighbor.value, neighbor.name))
+      connection_struct[node] = {"avail_conns" : avail_conns, "used_conns" : []}
+    return connection_struct
 
   def printGraph(self):
     """Display the structure of a the connected nodes."""
@@ -271,6 +275,64 @@ class Graph:
         tmp = tmp.next
       print("")
 
+def processDfsCycle(cycle, eulerian_struct):
+  """Update the state of each node in the eulerian_struct accoring to the cycle."""
+
+  for idx, node in enumerate(cycle):
+    if idx + 1 < len(cycle):
+      next_node = cycle[idx + 1]
+      # print(f"  Struct: {eulerian_struct[node]}")
+      for conn in eulerian_struct[node]["avail_conns"]:
+        if next_node == conn[0]:
+          # print(f"    Move {node} -> {conn[0]} ({conn[1]}) to used_conns")
+          eulerian_struct[node]["used_conns"].append((conn[0], conn[1]))
+          eulerian_struct[node]["avail_conns"].remove((conn[0], conn[1]))
+      # Also need to move the oposite connection
+      for conn in eulerian_struct[next_node]["avail_conns"]:
+        if node == conn[0]:
+          # print(f"    Also move {next_node} -> {conn[0]} ({conn[1]}) to used_conns")
+          eulerian_struct[next_node]["used_conns"].append((conn[0], conn[1]))
+          eulerian_struct[next_node]["avail_conns"].remove((conn[0], conn[1]))
+
+  return eulerian_struct
+
+def anyAvailablePaths(eulerian_struct):
+  """Return an indicator of availability any path."""
+
+  available_paths = False
+  # print(f"Eulerian: {eulerian_struct}")
+  for node in eulerian_struct.values():
+    # print(f"  len(node[avail_conns]): {len(node['avail_conns'])}")
+    if len(node["avail_conns"]) > 0:
+      available_paths = True
+      break
+  return available_paths
+
+def printEulerianPath(cycles, cycle_idx):
+  """Recursively display the order of connections between the path nodes in cycles."""
+
+  curr_cycle = cycles[cycle_idx]
+  # print(f"Processing cycles[{cycle_idx}]: {curr_cycle}")
+  for node_idx, node in enumerate(cycles[cycle_idx]):
+    # print(f"1. Processing node {node} on index {node_idx}")
+    next_cycle_idx = cycle_idx + 1
+    # if a new cycle started in this node (first node from next cycle), print path recursively
+    # if next_cycle_idx < len(cycles):
+      # print(f"  Next cycle: {cycles[next_cycle_idx]} with first node: {cycles[next_cycle_idx][0]}")
+    if next_cycle_idx < len(cycles) and node == cycles[next_cycle_idx][0]:
+      printEulerianPath(cycles, next_cycle_idx)
+      cycles.pop(next_cycle_idx)
+    #   print()
+    #   print(f"    Remove printed cycle. Back in main cycle [{node_idx}]. {curr_cycle}")
+
+    # print(f"2. Processing node {node} on index {node_idx}")
+    # finding next node in cycle
+    if node_idx + 1 < len(curr_cycle):
+      next_node = curr_cycle[node_idx + 1]
+      # print(f"{node} -> {next_node}")
+      if graph.existEgde(node, next_node):
+        print(f"{graph.getEgdeValue(node, next_node)}|", end="")
+
 if __name__ == "__main__":
   # Create graph and edges
 
@@ -278,25 +340,46 @@ if __name__ == "__main__":
 
   for line in sys.stdin:
     edge = re.split("\s", line)
-    print(edge)
+    if len(edge) < 4:
+      continue
     graph.addEdge(edge[0], edge[2], re.sub('\|', '', edge[1]))
 
-  print("-------------- ORIGINAL GRAPH ------------")
-  graph.printGraph()
+  # print("-------------- ORIGINAL GRAPH ------------")
+  # graph.printGraph()
 
-  if not graph.checkEulerianPathPrecondition():
+  if not graph.isConnected():
+    print("Graph is not connected. Cannot find Eulerian path!")
+    exit(1)
+
+  passed, odd_nodes = graph.checkEulerianPathPrecondition()
+  if not passed:
     print("Eulerian path precondition has not been satisfied.")
     exit(1)
 
-  dfs_cycles = []
-  first_name = list(graph.graph.keys())[0]
-  cycle = graph.createSingleDfsCycle(first_name)
-  print(cycle)
+  eulerian_struct = graph.createNodeConnectionsStructure()
 
+  first_name = list(graph.graph.keys())[0]
+  dfs_cycles = [[first_name]]
+
+  # try to recursively find dfs cycles in available connections
+  first_cycle = True
+  for dfs_cycle in dfs_cycles:
+    for node in dfs_cycle:
+      if not anyAvailablePaths(eulerian_struct):
+        break
+      # print(f"For node: {node}")
+      if first_cycle and len(odd_nodes) == 2:
+        cycle = graph.createSingleDfsCycle(odd_nodes[0], odd_nodes[1], eulerian_struct)
+        first_cycle = False
+      else:
+        cycle = graph.createSingleDfsCycle(node, node, eulerian_struct)
+      # print(cycle)
+      eulerian_struct = processDfsCycle(cycle, eulerian_struct)
+      dfs_cycles.append(cycle)
+
+  # Remove the initial node from the result
+  dfs_cycles.pop(0)
+  print(dfs_cycles)
   print("|", end="")
-  for idx, node in enumerate(cycle):
-    if idx + 1 < len(cycle):
-      next_node = cycle[idx + 1]
-      if graph.existEgde(node, next_node):
-        print(f"{graph.getEgdeValue(node, next_node)}|", end="")
+  printEulerianPath(dfs_cycles, 0)
   print()
