@@ -4,7 +4,6 @@
 
 # prejst každú hranu práve jedenkrát -> Eulerian path
 
-from readline import append_history_file
 import sys
 import re
 import copy
@@ -30,8 +29,7 @@ class Graph:
 
   def addEdge(self, source, destination, value = None, dfnum = None, low = None):
     """Connect the given destination vertex to the graph list source and
-       given source vertex to the graph list destination
-    ."""
+       given source vertex to the graph list destination."""
 
     # Create a node if not exists
     for node in (source, destination):
@@ -267,7 +265,6 @@ def createSingleDfsCycle(first_name, last_name, eulerian_struct):
     # end cycle if reached desired node
     if len(expanded_nodes) > 2 and node == last_name:
       previous_node = expanded_nodes[-1]
-      # store used path
       found_way = processSingleDirectionPathMove(previous_node, node, eulerian_struct, expanded_paths)
       if found_way:
         # also move path in oposite direction
@@ -280,7 +277,6 @@ def createSingleDfsCycle(first_name, last_name, eulerian_struct):
     found_way = False
     if len(expanded_nodes) > 0:
       previous_node = expanded_nodes[-1]
-      # store used path
       found_way, eulerian_struct = processSingleDirectionPathMove(previous_node, node, eulerian_struct, expanded_paths)
       if found_way:
         # also move path in oposite direction
@@ -295,13 +291,7 @@ def createSingleDfsCycle(first_name, last_name, eulerian_struct):
 
     # Found available paths from current node
     for neighbor in eulerian_struct[node]["avail_conns"]:
-      # prevent previous path
-      if len(expanded_nodes) >= 2:
-        # avoid path -> node, current_node, node
-        if expanded_nodes[-2] != neighbor[0]:
-          stack.append(neighbor[0])
-      else:
-        stack.append(neighbor[0])
+      stack.append(neighbor[0])
 
   return expanded_nodes, expanded_paths
 
