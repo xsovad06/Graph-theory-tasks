@@ -194,39 +194,6 @@ class Graph:
       tmp = tmp.next			
     return neighbours
 
-  def createSingleDfsCycle(self, first_name, last_name, eulerian_struct):
-    """Returns the order of nodes produced by DFS algorithm from given node to given node."""
-
-    stack = [first_name]
-    expanded_nodes = []
-    expanded_paths = []
-
-    while stack:
-      node = stack.pop()
-
-      if len(expanded_nodes) > 2 and node == last_name:
-        expanded_nodes.append(node)
-        return expanded_nodes
-
-      # if node in expanded_nodes:
-      #   continue
-
-      expanded_nodes.append(node)
-      # print(f" Processing {node}, expanded: {expanded_nodes}")
-
-      for neighbor in eulerian_struct[node]["avail_conns"]:
-        # prevent previous path
-        if len(expanded_nodes) >= 2:
-          # avoid path -> node, current_node, node
-          if expanded_nodes[-2] != neighbor[0]:
-            # print(f"  Adding to stack {neighbor[0]}")
-            stack.append(neighbor[0])
-        else:
-          # print(f"  Adding to stack {neighbor[0]}")
-          stack.append(neighbor[0])
-
-    return expanded_nodes
-
   def isConnected(self):
     """For every node must exist at least one connection for connected graph."""
 
@@ -254,7 +221,6 @@ class Graph:
       avail_conns = []
       for neighbor in self.getNeighboursList(node):
         avail_conns.append((neighbor.name, neighbor.value))
-        # avail_conns.append((neighbor.value, neighbor.name))
       connection_struct[node] = {"avail_conns" : avail_conns, "used_conns" : []}
     return connection_struct
 
