@@ -329,7 +329,7 @@ if __name__ == "__main__":
 
   for line in sys.stdin:
     edge = re.split("\s", line)
-    if len(edge) < 4:
+    if len(edge) < 3:
       continue
     graph.addEdge(edge[0], edge[2], re.sub('\|', '', edge[1]))
 
