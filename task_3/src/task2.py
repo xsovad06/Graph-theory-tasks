@@ -322,6 +322,32 @@ def printEulerianPathFromNodes(cycles, paths, cycle_idx):
     if node_idx + 1 < len(curr_cycle):
       print(f"{curr_path.pop(0)}|", end="")
 
+def eulerianPathAlgorithm(first_name, odd_nodes):
+  """Method find recursive cycles in the graph."""
+
+  dfs_cycles = [[first_name]]
+  dfs_paths = []
+  eulerian_struct = graph.createNodeConnectionsStructure()
+
+  # try to recursively find dfs cycles in available connections
+  first_cycle = True
+  for dfs_cycle in dfs_cycles:
+    for node in dfs_cycle:
+      if not anyAvailablePaths(eulerian_struct):
+        break
+
+      # if there are 2 nodes with odd number of connections, the eulerian path start is in fist and end in the second.
+      if first_cycle and len(odd_nodes) == 2:
+        cycle, path = createSingleDfsCycle(odd_nodes[0], odd_nodes[1], eulerian_struct)
+        first_cycle = False
+      # otherwise starting and endding point is the same
+      else:
+        cycle, path = createSingleDfsCycle(node, node, eulerian_struct)
+      dfs_cycles.append(cycle)
+      dfs_paths.append(path)
+
+  return dfs_cycles, dfs_paths
+
 if __name__ == "__main__":
   # Create graph and edges
 
@@ -345,28 +371,8 @@ if __name__ == "__main__":
     print("Eulerian path precondition has not been satisfied.")
     exit(1)
 
-  eulerian_struct = graph.createNodeConnectionsStructure()
-
-  first_name = list(graph.graph.keys())[0]
-  dfs_cycles = [[first_name]]
-  dfs_paths = []
-
-  # try to recursively find dfs cycles in available connections
-  first_cycle = True
-  for dfs_cycle in dfs_cycles:
-    for node in dfs_cycle:
-      if not anyAvailablePaths(eulerian_struct):
-        break
-
-      # if there are 2 nodes with odd number of connections, the eulerian path start is in fist and end in the second.
-      if first_cycle and len(odd_nodes) == 2:
-        cycle, path = createSingleDfsCycle(odd_nodes[0], odd_nodes[1], eulerian_struct)
-        first_cycle = False
-      # otherwise starting and endding point is the same
-      else:
-        cycle, path = createSingleDfsCycle(node, node, eulerian_struct)
-      dfs_cycles.append(cycle)
-      dfs_paths.append(path)
+  # Use eulerian path algorithm
+  dfs_cycles, dfs_paths = eulerianPathAlgorithm(list(graph.graph.keys())[0], odd_nodes)
 
   # Remove the initial node from the result
   dfs_cycles.pop(0)
