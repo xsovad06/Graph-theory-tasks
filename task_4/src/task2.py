@@ -335,7 +335,20 @@ if __name__ == "__main__":
     # colour the node with the lowest colour value according to neighbour colours
     final_colours.append(colourNode(node, neighbour_colours, [node.name for node in graph.getNeighboursList(node)]))
 
-  for group in getPocessedGroups(neighbour_colours, final_colours).values():
+  groups = getPocessedGroups(neighbour_colours, final_colours)
+  # do not allow one member groups
+  for group_idx, group in enumerate(groups.values()):
+    if len(group) == 1:
+      # find bigger group that will move one member to one man group
+      for bigger_group_idx, bigger_group in enumerate(groups.values()):
+        if len(bigger_group) > 2 and bigger_group_idx != group_idx:
+          for node in bigger_group:
+            # find suitable member who did not know the member of the one man group
+            if not graph.existEgde(group[0], node):
+              group.append(node)
+              bigger_group.remove(node)
+
+  for group in groups.values():
     print(", ".join(group))
 
     
