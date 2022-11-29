@@ -90,18 +90,15 @@ class TownGrid:
   def getBuildingClosestParkhouses(self, building_coordinates):
     """Return closest parkhouse to a given building order by distance."""
 
-    closest_parkhouses = []
-    closest_path = float('inf')
+    distances = []
+    closest_parkhouses = {}
     for item_coordinates, item in self.grid.items():
       for parkhouse in item.parkhouses:
         distance = countDistanceFromCoordinates(building_coordinates, item_coordinates)
-        if distance < closest_path:
-          closest_path = distance
-          closest_parkhouses.append((parkhouse[0], distance))
-        else:
-          closest_parkhouses.insert(0, (parkhouse[0], distance))
+        distances.append(distance)
+        closest_parkhouses[distance] = parkhouse[0]
 
-    return closest_parkhouses
+    return [(closest_parkhouses[distance], distance) for distance in sorted(distances, reverse=True)]
   
   def printGrid(self):
     """Display the grid structure."""
