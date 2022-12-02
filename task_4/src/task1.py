@@ -21,10 +21,11 @@ import copy
 ORIENTED_GRAPH = True
 
 class Node:
-  def __init__(self, name, value = None, edge = None):
+  def __init__(self, name, value = None, edge = None, stream = 0):
     self.name = name
     self.value = value
     self.edge = edge
+    self.stream = stream
     self.next = None
 
 class Graph:
@@ -187,7 +188,7 @@ class Graph:
       tmp = tmp.next
     return count
 
-  def getNeighboursList(self, name):
+  def getNeighboursList(self, name, oposite = False):
     """Returns the list of the connected nodes to the given node by name."""
 
     neighbours = []
@@ -197,27 +198,19 @@ class Graph:
       if tmp.name != name:
         neighbours.append(tmp)
       tmp = tmp.next
+
+    # check also neighbors from oposite direction
+    if oposite:
+      for node in self.graph:
+        # looking for connection neighbor -> name
+        if node != name:
+          tmp = self.graph[name]
+          while tmp:
+            if tmp.name == name:
+              neighbours.append(tmp)
+            tmp = tmp.next
+
     return neighbours
-
-  def createDfsTransition(self):
-    """Returns the order of nodes produced by DFS algorithm. Works in Oriented graph."""
-
-    first_name = list(self.graph.keys())[0]
-    dfnum = 0
-    stack = [first_name]
-    expanded = {}
-
-    while stack:
-      node = stack.pop()
-      if node in expanded:
-        continue
-      expanded[node] = {'df': dfnum}
-      dfnum += 1
-
-      for neighbor in self.getNeighboursList(node):
-        stack.append(neighbor.name)
-
-    return expanded
 
   def isConnected(self):
     """For every node must exist at least one connection for connected graph."""
@@ -227,27 +220,137 @@ class Graph:
         return False
     return True
 
-  def checkEulerianPathPrecondition(self):
-    """Count the number of each node neighbors. All must be even or precisely two odd."""
+  def getEdgeValues(self, source, destination):
+    """Return all edge attributes between source and destination."""
 
-    odd_nodes = []
+    if source not in self.graph:
+      return None
+
+    node = self.graph[source]
+    while node:
+      if node.name == destination:
+        return node
+      node = node.next
+    return None
+
+  def getEdgeOrientaion(self, source, destination):
+    """In oriented graph get orientation of the edge between source and destination."""
+
+    return "+" if self.existEgde(source, destination) else "-"
+
+  def createEdmondsKarpovStructure(self):
+    """For each node create dict of neccessary items for edmonds-karpov algorithm."""
+
+    ek_struct = {}
     for node in self.graph:
-      if len(self.getNeighboursList(node)) % 2 != 0:
-        if len(odd_nodes) > 1:
-          return False, odd_nodes
-        odd_nodes.append(node)
-    return True, odd_nodes
+      ek_struct[node] = {
+        "previous" : None,
+        "direction" : None,
+        "distance" : 0,
+        "delta" : float("inf")
+      }
+    return ek_struct
 
-  def createNodeConnectionsStructure(self):
-    """For each node create list of available and used connections to neighbor nodes."""
+  def edmondsKarpovBfsIteration(self, name, ek_struct):
+    """Returns the order of nodes produced by BFS algorithm."""
 
-    connection_struct = {}
+    expanded = {name: ek_struct[name]}
+    queue = [expanded]
+    # TODO: solve counts with oposite direction connections
+
+    while queue:
+      # process current node
+      node = queue.pop(0)
+      previous = list(node.keys())[0]
+      distance = list(node.values())[0]["distance"]
+
+      # price the way to its neighbors
+      # print(f"For neighbors: {[node.name for node in self.getNeighboursList(previous, oposite = True)]}")
+      for neighbor in self.getNeighboursList(previous, oposite = True):
+        edge = self.getEdgeValues(previous, neighbor.name)
+        reserve = edge.value - edge.stream
+        new_value = {
+          "previous" : previous,
+          "direction" : self.getEdgeOrientaion(previous, neighbor.name),
+          "distance" : distance + 1,
+          "delta" : min(reserve, ek_struct[previous].get("delta"))
+          }
+        if neighbor.name not in expanded and reserve:
+          expanded[neighbor.name] = new_value
+          ek_struct[neighbor.name] = new_value
+          queue.append({neighbor.name: new_value})
+
+    return ek_struct
+
+  def getStreamIncreasePath(self, ek_struct, drain):
+    """Finds the path from source to drain and value to increase the stream."""
+
+    path = [drain]
+    tmp = ek_struct[drain]["previous"]
+    while tmp:
+      path.insert(0, tmp)
+      tmp = ek_struct[tmp]["previous"]
+
+    return path, ek_struct[drain]["delta"]
+
+  def increaseStream(self, ek_struct, drain):
+    """For given path increase the stream by value."""
+
+    path, value = self.getStreamIncreasePath(ek_struct, drain)
+    # print(f"Increasing stream by value {value}, path: {path}")
+
+    increase_possible = True
+    # check if the stream on all path can be increased
+    for node_idx, node in enumerate(path):
+      if node_idx + 1 < len(path):
+        tmp = self.graph[node]
+
+        while tmp:
+          if tmp.name == path[node_idx + 1]:
+            if not (tmp.stream + value <= tmp.value):
+              increase_possible = False
+          tmp = tmp.next
+
+    if increase_possible:
+      for node_idx, node in enumerate(path):
+        if node_idx + 1 < len(path):
+          tmp = self.graph[node]
+
+          while tmp:
+            if tmp.name == path[node_idx + 1]:
+              tmp.stream += value
+            tmp = tmp.next
+
+    return increase_possible, path
+
+  def getMaximunStream(self, source_node):
+    """Sums up stream from source node"""
+
+    total_stream = 0
+    tmp = self.graph[source_node]
+    while tmp:
+      if tmp.stream:
+        total_stream += tmp.stream
+      tmp = tmp.next
+
+    return total_stream
+
+  def getIndividualEdgeStreams(self):
+    """Returns structure of edges with particular stream size compared with capacity."""
+
+    edges = {}
     for node in self.graph:
-      avail_conns = []
-      for neighbor in self.getNeighboursList(node):
-        avail_conns.append((neighbor.name, neighbor.value))
-      connection_struct[node] = {"avail_conns" : avail_conns, "used_conns" : []}
-    return connection_struct
+      tmp = self.graph[node]
+      while tmp:
+        edges[tmp.edge[1::]] = (tmp.stream, tmp.value)
+        tmp = tmp.next
+
+    sorted_edges = {}
+    for edge in sorted([int(edge) for edge in edges.keys()]):
+      key = str(edge).zfill(2)
+      sorted_edges[f"D{key}"] = edges[key]
+
+    return sorted_edges
 
   def printGraph(self):
     """Display the structure of a the connected nodes."""
@@ -261,31 +364,26 @@ class Graph:
           print(f", v({tmp.value})", end="")
         if tmp.edge:
           print(f", e({tmp.edge})", end="")
+        if tmp.stream:
+          print(f", s({tmp.stream})", end="")
         tmp = tmp.next
       print("")
-
-def getValue(dijkstra_struct, node):
-  """Returns the shortest path cost to a given node."""
-
-  return dijkstra_struct[node][1]
-
-def getPredecessor(dijkstra_struct, node):
-  """Returns the previous node in the shortest path to the given node."""
-
-  return dijkstra_struct[node][0]
 
 if __name__ == "__main__":
   # Create graph and edges
 
   graph = Graph()
   first_line = True
+  initial_capacity = 0
   source_node = None
+  final_node = "EXIT"
 
   for line in sys.stdin:
     if first_line:
       group = re.split("\s", line)
       first_line = False
-      source_node = (group[0], group[1])
+      source_node = re.sub(':', '', group[0])
+      initial_capacity = group[1]
       continue
 
     edge = re.split("\s", line)
@@ -293,5 +391,26 @@ if __name__ == "__main__":
       continue
     graph.addEdge(edge[1], edge[3], value = int(edge[4]), edge = re.sub(':', '', edge[0]))
 
-  print("-------------- ORIGINAL GRAPH ------------")
-  graph.printGraph()
+  # print("-------------- ORIGINAL GRAPH ------------")
+  # graph.printGraph()
+
+  edmonds_karpov = graph.createEdmondsKarpovStructure()
+  increased = True
+  max_path = 0
+  while increased:
+    # strating from source node BFS
+    edmonds_karpov = graph.edmondsKarpovBfsIteration(source_node, edmonds_karpov)
+    # increase stream on edmonds-karpov path
+    increased, path = graph.increaseStream(edmonds_karpov, final_node)
+    max_path = max(max_path, len(path))
+
+  # get maximum network stream –> sum of streams from source node
+  max_stream = graph.getMaximunStream(source_node)
+  print(f"Group size: {max_stream}")
+
+  edges = graph.getIndividualEdgeStreams()
+  for edge, stream_capacity in edges.items():
+    stream = f"!{stream_capacity[0]}!" if stream_capacity[0] == stream_capacity[1] else f"{stream_capacity[0]}"
+    print(f"{edge}: {stream}")
+
+  print(f"Time: {(int(initial_capacity) / max_stream) + max_path - 2}")
